@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+root=
+relative=
+find_root() {
+    pushd . &>/dev/null
+    while ! [[ -f mani.yaml ]]
+    do
+        [[ "$PWD" == "/" ]] && popd &>/dev/null && return
+        cd ..
+    done
+    root="$PWD"
+    popd &>/dev/null
+    return
+}
+find_root
+
+[[ -z "$root" ]] && echo "No 'mani.yaml' found." && exit 1
+config="$root/mani.yaml"
+
+# Relative path compare to 'mani' root.
+if [[ "$root" != "$PWD" ]]
+then
+    relative=${PWD//$root\//}
+fi
+
+project=
+add=
+delete=
+change=
+
+while getopts "p:a:d:c:" flag
+do
+    case "$flag" in
+        "p") project="$OPTARG";;
+        "a") add="$OPTARG";;
+        "d") delete="$OPTARG";;
+    esac
+done
+
+if [[ -z "$project" ]]
+then
+    project=$(yq -r ".projects | to_entries | .[] | select(.value.path == \"$relative\") | .key" "$config")
+fi
+[[ -z "$project" ]] && echo "No project with path '$relative' in 'mani.yaml'." && exit 1
+
+if [[ -n "$delete" ]]
+then
+    flock $config command yq -i ".projects.$project.tags |= filter(. != \"$delete\")" $config
+fi
+
+if [[ -n "$add" ]]
+then
+    flock $config command yq -i ".projects.$project.tags = (.projects.$project.tags + [\"$add\"] | unique)" $config
+fi
