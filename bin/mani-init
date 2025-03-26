@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+function help()
+{
+    echo "USAGE:"
+    echo "  mani-init [OPTIONS]"
+    echo
+    echo "OPTIONS:"
+    echo "  -f file1,file2,...          Select file to create project from"
+    echo "                              (default: .git)"
+    echo "  -n CMD                      Run command on project directory to assign a name"
+    echo "                              (default: relative path from 'mani.yaml')."
+    echo "  -s                          Sync existing 'mani.yaml' with additional projects."
+    echo "  -h                          Show this help message"
+    exit
+}
+
+# Check for required executables.
+if ! command -v fd &>/dev/null
+then
+    echo "Required executable not found: fd"
+    exit 1
+fi
+if ! command -v flock &>/dev/null
+then
+    echo "Required executable not found: flock"
+    exit 1
+fi
+if ! command -v yq &>/dev/null
+then
+    echo "Required executable not found: yq"
+    exit 1
+fi
+
+# Variables to be used in the script.
+files="^.git\$"         # Files to search for projects.
+namecmd=""              # Command to run to give name.
+sync=                   # Sync additional projects.
+cfg="$PWD/mani.yaml"
+
+# Parse arguments
+while getopts "f:n:sh" flag
+do
+    case "$flag" in
+        "f") files="^${OPTARG//,/|}\$";;
+        "n") namecmd="$OPTARG";;
+        "s") sync=1;;
+        "h") help;;
+    esac
+done
+
+if [[ -f "$cfg" ]]
+then
+    [[ -z "$sync" ]] && echo "File '$(basename $cfg)' already exists." && exit
+else
+    echo "projects:" > "$cfg"
+fi
+
+# Generate yaml entry
+config()
+{
+    file="$1"
+    dirname="$(dirname "$file")"
+    dirname=${dirname:2}
+    cd "$dirname"
+    [[ -n "$namecmd" ]] && name=$(eval "$namecmd") || name="$dirname"
+    [[ "$(flock "$cfg" command yq ".projects.$name" "$cfg")" != "null" ]] && return
+    if [[ "$name" != "$dirname" ]]
+    then
+        flock "$cfg" command yq -i ".projects.$name = {\"path\": \"$dirname\", \"sync\": false}" "$cfg"
+    else
+        flock "$cfg" command yq -i ".projects.$name = {\"sync\": false}" "$cfg"
+    fi
+}
+
+# Export names needed in 'config'.
+export cfg
+export namecmd
+export -f config
+
+fd "$files" --no-ignore --hidden -x sh -c 'config {}'
+[[ $(cat "$cfg") == "projects:" ]] && echo "No projects created." && rm "$cfg" && exit 1
+flock "$cfg" command yq -i ".projects |= sort_keys(.)" "$cfg"
+mani ls projects

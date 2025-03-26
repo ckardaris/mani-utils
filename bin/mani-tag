@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+function help()
+{
+    echo "USAGE:"
+    echo "  mani-tag [OPTIONS]"
+    echo
+    echo "OPTIONS:"
+    echo "  -p project1,project2,...    Select project (default: current directory)"
+    echo "  -P                          Select all projects"
+    echo "  -a tag1,tag2,...            Add tags to projects"
+    echo "  -d tag1,tag2,...            Delete tags from projects"
+    echo "  -c                          Clear all tags for projects"
+    echo "  -h                          Show this help message"
+    exit
+}
+
+[[ "$#" -eq 0 ]] && help
+
+# Check for required executables.
+if ! command -v flock &>/dev/null
+then
+    echo "Required executable not found: flock"
+    exit 1
+fi
+if ! command -v yq &>/dev/null
+then
+    echo "Required executable not found: yq"
+    exit 1
+fi
+
+# Variables to be used in the script.
+root=       # The 'mani' root containing the 'mani.yaml' file.
+config=     # Full path of the 'mani.yaml' file.
+relative=   # Relative path of the current directory to the 'mani' root.
+projects=() # Project to add/delete/create tags for.
+selector=   # Multiple path selector for yq
+add=        # Tags to add.
+delete=     # Tags to delete.
+clr=        # Clear all tags flag.
+helpmsg=    # Show help message
+all=        # Flag to select all projects.
+
+# Find 'mani' root.
+pushd . &>/dev/null
+while ! [[ -f mani.yaml ]]
+do
+    if [[ "$PWD" == "/" ]]
+    then
+        echo "No 'mani.yaml' found."
+        exit 1
+    fi
+    cd ..
+done
+root="$PWD"
+popd &>/dev/null
+
+# Set config file.
+config="$root/mani.yaml"
+
+# Set relative path compare to 'mani' root.
+[[ "$root" != "$PWD" ]] && relative=${PWD//$root\//}
+
+# Parse arguments
+while getopts "p:Pa:d:ch" flag
+do
+    case "$flag" in
+        "p") IFS=',' read -a projects <<< "$OPTARG";;
+        "P") all=1;;
+        "a") add="[\"${OPTARG//,/\",\"}\"]";;
+        "d") delete="[\"${OPTARG//,/\",\"}\"]";;
+        "c") clr=1;;
+        "h") help;;
+    esac
+done
+
+if [[ -n "$all" ]]
+then
+    selector=".projects.*.tags"
+else
+    # Find project based on 'mani.yaml' and relative path.
+    if [[ "${#projects[@]}" -eq 0 ]]
+    then
+        projects=( $(yq -r ".projects | to_entries | .[] | select(.value.path == \"$relative\") | .key" "$config") )
+        if [[ ${#projects[@]} -eq 0 ]]
+        then
+            findname="$(yq ".projects | has(\"$relative\")" "$config")"
+            notfindpath="$(yq ".projects.\"$relative\".path == null" "$config")"
+            if [[ "$findname" == "true" ]] && [[ "$notfindpath" == "true" ]]
+            then
+                projects=( "$relative" )
+            else
+                echo "No project with path or name '$relative' in '$config'." && exit 1
+            fi
+        fi
+    fi
+
+    selector="("
+    for project in "${projects[@]}"
+    do
+        [[ "$(yq .projects.$project $config)" == "null" ]] && echo "No project with name '$project' in '$config'." && exit 1
+        selector+=".projects.$project.tags, "
+    done
+    selector="${selector:0:-2})"
+fi
+
+
+# Handle arguments
+if [[ -n "$delete" ]]
+then
+    flock $config command yq -i "$selector |= (filter([.] - $delete | length > 0) | sort)" $config
+fi
+
+if [[ -n "$add" ]]
+then
+    flock $config command yq -i "$selector |= (. + $add | unique | sort)" $config
+fi
+
+if [[ -n "$clr" ]]
+then
+    flock $config command yq -i "$selector = []" $config
+fi
