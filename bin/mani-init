@@ -12,8 +12,33 @@ function help()
     echo "                              (default: relative path from 'mani.yaml')."
     echo "  -s                          Sync existing 'mani.yaml' with additional projects."
     echo "  -h                          Show this help message"
-    exit
+    exit "${1:-0}"
 }
+
+# Variables to be used in the script.
+files="^.git\$"         # Files to search for projects.
+namecmd=""              # Command to run to give name.
+sync=                   # Sync additional projects.
+cfg="$PWD/mani.yaml"
+
+# Parse arguments
+while getopts "f:n:sh" flag
+do
+    case "$flag" in
+        "f") files="^${OPTARG//,/|}\$";;
+        "n") namecmd="$OPTARG";;
+        "s") sync=1;;
+        "h") help 0;;
+        *) help 1;;
+    esac
+done
+
+if [[ -f "$cfg" ]]
+then
+    [[ -z "$sync" ]] && echo "File '$(basename "$cfg")' already exists." && exit
+else
+    echo "projects:" > "$cfg"
+fi
 
 # Check for required executables.
 if ! command -v fd &>/dev/null
@@ -32,37 +57,13 @@ then
     exit 1
 fi
 
-# Variables to be used in the script.
-files="^.git\$"         # Files to search for projects.
-namecmd=""              # Command to run to give name.
-sync=                   # Sync additional projects.
-cfg="$PWD/mani.yaml"
-
-# Parse arguments
-while getopts "f:n:sh" flag
-do
-    case "$flag" in
-        "f") files="^${OPTARG//,/|}\$";;
-        "n") namecmd="$OPTARG";;
-        "s") sync=1;;
-        "h") help;;
-    esac
-done
-
-if [[ -f "$cfg" ]]
-then
-    [[ -z "$sync" ]] && echo "File '$(basename $cfg)' already exists." && exit
-else
-    echo "projects:" > "$cfg"
-fi
-
 # Generate yaml entry
 config()
 {
     file="$1"
     dirname="$(dirname "$file")"
     dirname=${dirname:2}
-    cd "$dirname"
+    cd "$dirname" || return
     [[ -n "$namecmd" ]] && name=$(eval "$namecmd") || name="$dirname"
     [[ "$(flock "$cfg" command yq ".projects.$name" "$cfg")" != "null" ]] && return
     if [[ "$name" != "$dirname" ]]
