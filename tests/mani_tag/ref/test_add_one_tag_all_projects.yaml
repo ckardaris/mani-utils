@@ -1,0 +1,86 @@
+projects:
+  project1:
+    tags:
+      - fail
+      - tag1
+  project2:
+    tags:
+      - fail
+      - tag1
+      - tag2
+      - tag3
+  project3:
+    path: sub/project3
+    tags:
+      - fail
+      - tag1
+  project301:
+    tags:
+      - fail
+  project302:
+    tags:
+      - fail
+  project303:
+    tags:
+      - fail
+  project304:
+    tags:
+      - fail
+  project305:
+    tags:
+      - fail
+  project306:
+    tags:
+      - fail
+  project307:
+    tags:
+      - fail
+  project308:
+    tags:
+      - fail
+  project309:
+    tags:
+      - fail
+  project310:
+    tags:
+      - fail
+  project311:
+    tags:
+      - fail
+  project312:
+    tags:
+      - fail
+  project313:
+    tags:
+      - fail
+  project314:
+    tags:
+      - fail
+  project315:
+    tags:
+      - fail
+  project316:
+    tags:
+      - fail
+  project317:
+    tags:
+      - fail
+  project318:
+    tags:
+      - fail
+  project319:
+    tags:
+      - fail
+  project320:
+    tags:
+      - fail
+  project321:
+    tags:
+      - fail
+  project4:
+    path: sub/project4
+    tags:
+      - fail
+      - tag1
+      - tag2
+      - tag3

@@ -1,0 +1,55 @@
+projects:
+  project1:
+    tags: []
+  project2:
+    tags:
+      - tag2
+  project3:
+    path: sub/project3
+    tags: []
+  project301:
+    tags: []
+  project302:
+    tags: []
+  project303:
+    tags: []
+  project304:
+    tags: []
+  project305:
+    tags: []
+  project306:
+    tags: []
+  project307:
+    tags: []
+  project308:
+    tags: []
+  project309:
+    tags: []
+  project310:
+    tags: []
+  project311:
+    tags: []
+  project312:
+    tags: []
+  project313:
+    tags: []
+  project314:
+    tags: []
+  project315:
+    tags: []
+  project316:
+    tags: []
+  project317:
+    tags: []
+  project318:
+    tags: []
+  project319:
+    tags: []
+  project320:
+    tags: []
+  project321:
+    tags: []
+  project4:
+    path: sub/project4
+    tags:
+      - tag2

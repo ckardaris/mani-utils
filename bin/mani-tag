@@ -79,6 +79,7 @@ function main()
     root="$1"
     # Set config file.
     config="$root/mani.yaml"
+    lock="$config.lock"
 
     # Set relative path compare to 'mani' root.
     [[ "$root" != "$PWD" ]] && relative=${PWD//$root\//}
@@ -90,13 +91,13 @@ function main()
         # Find project based on 'mani.yaml' and relative path.
         if [[ "${#projects[@]}" -eq 0 ]]
         then
-            project="$(yq ".projects | to_entries | .[] | select(.value.path == \"$relative\") | .key" "$config")"
+            project="$(flock "$lock" command yq ".projects | to_entries | .[] | select(.value.path == \"$relative\") | .key" "$config")"
             if [[ -n "$project" ]]
             then
                 projects=( "$project" )
             else
-                findname="$(yq ".projects | has(\"$relative\")" "$config")"
-                notfindpath="$(yq ".projects.\"$relative\".path == null" "$config")"
+                findname="$(flock "$lock" command yq ".projects | has(\"$relative\")" "$config")"
+                notfindpath="$(flock "$lock" command yq ".projects.\"$relative\".path == null" "$config")"
                 if [[ "$findname" == "true" ]] && [[ "$notfindpath" == "true" ]]
                 then
                     projects=( "$relative" )
@@ -109,27 +110,26 @@ function main()
         selector="("
         for project in "${projects[@]}"
         do
-            [[ "$(yq ".projects.\"$project\"" "$config")" == "null" ]] && echo "No project with name '$project' in '$config'." && return 1
+            [[ "$(flock "$lock" command yq ".projects.\"$project\"" "$config")" == "null" ]] && echo "No project with name '$project' in '$config'." && return 1
             selector+=".projects.\"$project\".tags, "
         done
         selector="${selector:0:-2})"
     fi
 
-
     # Handle arguments
     if [[ -n "$delete" ]]
     then
-        flock "$config" command yq -i "$selector |= (filter([.] - $delete | length > 0) | sort)" "$config"
+        flock "$lock" command yq -i "$selector |= (filter([.] - $delete | length > 0) | sort)" "$config"
     fi
 
     if [[ -n "$add" ]]
     then
-        flock "$config" command yq -i "$selector |= (. + $add | unique | sort)" "$config"
+        flock "$lock" command yq -i "$selector |= (. + $add | unique | sort)" "$config"
     fi
 
     if [[ -n "$clr" ]]
     then
-        flock "$config" command yq -i "$selector = []" "$config"
+        flock "$lock" command yq -i "$selector = []" "$config"
     fi
 }
 

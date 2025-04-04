@@ -1,0 +1,111 @@
+projects:
+  project1:
+    tags:
+      - fail
+      - success
+      - tag1
+  project2:
+    tags:
+      - fail
+      - success
+      - tag1
+      - tag2
+      - tag3
+  project3:
+    path: sub/project3
+    tags:
+      - fail
+      - success
+      - tag1
+  project301:
+    tags:
+      - fail
+      - success
+  project302:
+    tags:
+      - fail
+      - success
+  project303:
+    tags:
+      - fail
+      - success
+  project304:
+    tags:
+      - fail
+      - success
+  project305:
+    tags:
+      - fail
+      - success
+  project306:
+    tags:
+      - fail
+      - success
+  project307:
+    tags:
+      - fail
+      - success
+  project308:
+    tags:
+      - fail
+      - success
+  project309:
+    tags:
+      - fail
+      - success
+  project310:
+    tags:
+      - fail
+      - success
+  project311:
+    tags:
+      - fail
+      - success
+  project312:
+    tags:
+      - fail
+      - success
+  project313:
+    tags:
+      - fail
+      - success
+  project314:
+    tags:
+      - fail
+      - success
+  project315:
+    tags:
+      - fail
+      - success
+  project316:
+    tags:
+      - fail
+      - success
+  project317:
+    tags:
+      - fail
+      - success
+  project318:
+    tags:
+      - fail
+      - success
+  project319:
+    tags:
+      - fail
+      - success
+  project320:
+    tags:
+      - fail
+      - success
+  project321:
+    tags:
+      - fail
+      - success
+  project4:
+    path: sub/project4
+    tags:
+      - fail
+      - success
+      - tag1
+      - tag2
+      - tag3

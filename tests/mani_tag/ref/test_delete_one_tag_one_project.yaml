@@ -1,0 +1,39 @@
+projects:
+  project1:
+    tags:
+      - tag1
+  project2:
+    tags:
+      - tag2
+      - tag3
+  project3:
+    path: sub/project3
+    tags:
+      - tag1
+  project301:
+  project302:
+  project303:
+  project304:
+  project305:
+  project306:
+  project307:
+  project308:
+  project309:
+  project310:
+  project311:
+  project312:
+  project313:
+  project314:
+  project315:
+  project316:
+  project317:
+  project318:
+  project319:
+  project320:
+  project321:
+  project4:
+    path: sub/project4
+    tags:
+      - tag1
+      - tag2
+      - tag3

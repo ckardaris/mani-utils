@@ -1,0 +1,6 @@
+projects:
+  project3:
+    sync: false
+  project6:
+    path: sub/project6
+    sync: false
