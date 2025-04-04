@@ -42,26 +42,6 @@ do
     esac
 done
 
-# Find 'mani' root.
-pushd . &>/dev/null
-while ! [[ -f mani.yaml ]]
-do
-    if [[ "$PWD" == "/" ]]
-    then
-        echo "No 'mani.yaml' found."
-        exit 1
-    fi
-    cd ..
-done
-root="$PWD"
-popd &>/dev/null || exit 1
-
-# Set config file.
-config="$root/mani.yaml"
-
-# Set relative path compare to 'mani' root.
-[[ "$root" != "$PWD" ]] && relative=${PWD//$root\//}
-
 # Check for required executables.
 if ! command -v flock &>/dev/null
 then
@@ -74,49 +54,94 @@ then
     exit 1
 fi
 
-if [[ -n "$all" ]]
-then
-    selector=".projects.*.tags"
-else
-    # Find project based on 'mani.yaml' and relative path.
-    if [[ "${#projects[@]}" -eq 0 ]]
-    then
-        projects=( "$(yq -r ".projects | to_entries | .[] | select(.value.path == \"$relative\") | .key" "$config")" )
-        if [[ ${#projects[@]} -eq 0 ]]
+function find_root()
+{
+    # Find 'mani' root.
+    pushd "$1" &>/dev/null || return 1
+    while ! [[ -f mani.yaml ]]
+    do
+        if [[ "$PWD" == "/" ]]
         then
-            findname="$(yq ".projects | has(\"$relative\")" "$config")"
-            notfindpath="$(yq ".projects.\"$relative\".path == null" "$config")"
-            if [[ "$findname" == "true" ]] && [[ "$notfindpath" == "true" ]]
+            echo "No 'mani.yaml' found."
+            exit 1
+        fi
+        cd ..
+    done
+    root="$PWD"
+    echo "$root"
+    popd &>/dev/null || return 1
+}
+export -f find_root
+
+function main()
+{
+    # Set root.
+    root="$1"
+    # Set config file.
+    config="$root/mani.yaml"
+
+    # Set relative path compare to 'mani' root.
+    [[ "$root" != "$PWD" ]] && relative=${PWD//$root\//}
+
+    if [[ -n "$all" ]]
+    then
+        selector=".projects.*.tags"
+    else
+        # Find project based on 'mani.yaml' and relative path.
+        if [[ "${#projects[@]}" -eq 0 ]]
+        then
+            project="$(yq ".projects | to_entries | .[] | select(.value.path == \"$relative\") | .key" "$config")"
+            if [[ -n "$project" ]]
             then
-                projects=( "$relative" )
+                projects=( "$project" )
             else
-                echo "No project with path or name '$relative' in '$config'." && exit 1
+                findname="$(yq ".projects | has(\"$relative\")" "$config")"
+                notfindpath="$(yq ".projects.\"$relative\".path == null" "$config")"
+                if [[ "$findname" == "true" ]] && [[ "$notfindpath" == "true" ]]
+                then
+                    projects=( "$relative" )
+                else
+                    echo "No project with name or path '$relative' in '$config'." && return 1
+                fi
             fi
         fi
+
+        selector="("
+        for project in "${projects[@]}"
+        do
+            [[ "$(yq ".projects.\"$project\"" "$config")" == "null" ]] && echo "No project with name '$project' in '$config'." && return 1
+            selector+=".projects.\"$project\".tags, "
+        done
+        selector="${selector:0:-2})"
     fi
 
-    selector="("
-    for project in "${projects[@]}"
-    do
-        [[ "$(yq ".projects.\"$project\"" "$config")" == "null" ]] && echo "No project with name '$project' in '$config'." && exit 1
-        selector+=".projects.\"$project\".tags, "
-    done
-    selector="${selector:0:-2})"
-fi
 
+    # Handle arguments
+    if [[ -n "$delete" ]]
+    then
+        flock "$config" command yq -i "$selector |= (filter([.] - $delete | length > 0) | sort)" "$config"
+    fi
 
-# Handle arguments
-if [[ -n "$delete" ]]
-then
-    flock "$config" command yq -i "$selector |= (filter([.] - $delete | length > 0) | sort)" "$config"
-fi
+    if [[ -n "$add" ]]
+    then
+        flock "$config" command yq -i "$selector |= (. + $add | unique | sort)" "$config"
+    fi
 
-if [[ -n "$add" ]]
-then
-    flock "$config" command yq -i "$selector |= (. + $add | unique | sort)" "$config"
-fi
+    if [[ -n "$clr" ]]
+    then
+        flock "$config" command yq -i "$selector = []" "$config"
+    fi
+}
 
-if [[ -n "$clr" ]]
-then
-    flock "$config" command yq -i "$selector = []" "$config"
-fi
+dir="$PWD"
+while true
+do
+    ! root="$(find_root "$dir")" && echo "$root" && exit 1
+    main "$root" && exit 0
+
+    # mani.yaml files can be nested inside projects and create
+    # name collisions.
+    dir="$root/.."
+    [[ "$(readlink -f "$dir")" == "/" ]] && exit 1
+    echo "Checking in parent directories..."
+done
