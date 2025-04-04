@@ -1,6 +1,10 @@
 .PHONY: format
 format:
-	@nix-shell -p python312Packages.{isort,black,flake8} --run './scripts/code_quality.sh'
+	@nix-shell -p python312Packages.{isort,black,flake8} --run './scripts/python_lint_format.sh'
+
+.PHONY: lint
+lint:
+	@nix-shell -p shellcheck --run 'shellcheck bin/*'
 
 .PHONY: test
 test:
