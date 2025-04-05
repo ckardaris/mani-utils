@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 
+function requirement()
+{
+    if ! command -v "$1" &>/dev/null
+    then
+        echo "Required executable not found: $1"
+        exit 1
+    fi
+}
+
 function help()
 {
+    # HELP_BEGIN
     echo "USAGE:"
     echo "  mani-init [OPTIONS]"
     echo
@@ -12,6 +22,7 @@ function help()
     echo "                              (default: relative path from 'mani.yaml')."
     echo "  -s                          Sync existing 'mani.yaml' with additional projects."
     echo "  -h                          Show this help message"
+    # HELP_END
     exit "${1:-0}"
 }
 
@@ -41,21 +52,9 @@ else
 fi
 
 # Check for required executables.
-if ! command -v fd &>/dev/null
-then
-    echo "Required executable not found: fd"
-    exit 1
-fi
-if ! command -v flock &>/dev/null
-then
-    echo "Required executable not found: flock"
-    exit 1
-fi
-if ! command -v yq &>/dev/null
-then
-    echo "Required executable not found: yq"
-    exit 1
-fi
+requirement fd
+requirement flock
+requirement yq
 
 # Generate yaml entry
 config()

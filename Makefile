@@ -13,3 +13,7 @@ test:
 .PHONY: test-debug
 test-debug:
 	@nix-shell -p python312Packages.pytest --run 'pytest --no-header -vv; cd $$NIX_BUILD_TOP; bash'
+
+.PHONY: docs
+docs:
+	@./scripts/make_docs.sh
