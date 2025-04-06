@@ -47,7 +47,7 @@ done
 
 if [[ -f "$cfg" ]]
 then
-    [[ -z "$sync" ]] && echo "File '$(basename "$cfg")' already exists. Use option '-s' to sync existing configuration." && exit
+    [[ -z "$sync" ]] && echo "File '$(basename "$cfg")' already exists. Use option '-s' to sync existing configuration." && exit 1
 else
     echo "projects:" > "$cfg"
 fi

@@ -73,6 +73,7 @@ echo projects: > mani.yaml
 mani-init
 """,
         tmp_path,
+        exit_code=1
     )
 
 

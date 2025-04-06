@@ -22,7 +22,7 @@ def replace_work_dir(work_dir, string):
     return re.sub(r"{work_dir}", str(work_dir), string)
 
 
-def check_output(request, cmd, work_dir, rel_dir=None):
+def check_output(request, cmd, work_dir, rel_dir=None, exit_code=0):
     pwd = request.node.path.parent
     ref = pwd / "ref"
     projects = pwd / "projects"
@@ -38,7 +38,7 @@ def check_output(request, cmd, work_dir, rel_dir=None):
         shell=True,
     )
 
-    if result.returncode != 0:
+    if result.returncode != exit_code:
         print("=== STDOUT")
         print(result.stdout)
         print("=== STDERR")
