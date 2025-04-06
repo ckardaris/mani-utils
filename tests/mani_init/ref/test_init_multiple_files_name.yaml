@@ -1,0 +1,13 @@
+projects:
+  projects_project1:
+    path: project1
+    sync: false
+  projects_project2:
+    path: project2
+    sync: false
+  sub_project4:
+    path: sub/project4
+    sync: false
+  sub_project5:
+    path: sub/project5
+    sync: false
