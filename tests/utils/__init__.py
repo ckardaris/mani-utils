@@ -39,6 +39,9 @@ def check_output(request, cmd, work_dir, rel_dir=None, exit_code=0):
     )
 
     if result.returncode != exit_code:
+        print("=== STATUS")
+        print("Actual  :", result.returncode)
+        print("Expected:", exit_code)
         print("=== STDOUT")
         print(result.stdout)
         print("=== STDERR")
@@ -49,8 +52,9 @@ def check_output(request, cmd, work_dir, rel_dir=None, exit_code=0):
     stdout = ref / f"{request.node.name}.stdout"
     stderr = ref / f"{request.node.name}.stderr"
     config = base / "mani.yaml"
-    assert config.is_file()
-    check_strings(reference.read_text(), config.read_text())
+    assert config.is_file() or not reference.is_file()
+    if reference.is_file():
+        check_strings(reference.read_text(), config.read_text())
     check_strings(
         (
             replace_work_dir(work_dir, stdout.read_text())

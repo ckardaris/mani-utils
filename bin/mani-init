@@ -81,6 +81,6 @@ export namecmd
 export -f config
 
 fd "$files" --no-ignore --hidden -x sh -c 'config {}'
-[[ $(cat "$cfg") == "projects:" ]] && echo "No projects created." && rm "$cfg" && exit 1
+[[ $(cat "$cfg") == "projects:" ]] && echo "No projects created." && rm -f "$cfg" && exit 1
 flock "$lock" command yq -i ".projects |= sort_keys(.)" "$cfg"
 mani ls projects

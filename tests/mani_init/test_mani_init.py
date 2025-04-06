@@ -29,8 +29,12 @@ def test_init_file1(request, tmp_path):
 def test_init_file2(request, tmp_path):
     check_output(request, "mani-init -f file2.txt &>/dev/null", tmp_path)
 
+
 def test_init_multiple_files(request, tmp_path):
-    check_output(request, "mani-init -f file1.txt,file2.txt &>/dev/null", tmp_path)
+    check_output(
+        request, "mani-init -f file1.txt,file2.txt &>/dev/null", tmp_path
+    )
+
 
 def test_init_file1_name(request, tmp_path):
     check_output(
@@ -47,6 +51,7 @@ def test_init_file2_name(request, tmp_path):
         tmp_path,
     )
 
+
 def test_init_multiple_files_name(request, tmp_path):
     check_output(
         request,
@@ -54,14 +59,15 @@ def test_init_multiple_files_name(request, tmp_path):
         tmp_path,
     )
 
+
 def test_no_files(request, tmp_path):
     check_output(
         request,
         """
 mani-init -f random.txt
-touch mani.yaml
 """,
         tmp_path,
+        exit_code=1,
     )
 
 
@@ -73,7 +79,7 @@ echo projects: > mani.yaml
 mani-init
 """,
         tmp_path,
-        exit_code=1
+        exit_code=1,
     )
 
 

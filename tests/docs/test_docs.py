@@ -22,6 +22,7 @@ OPTIONS:
         in doc.read_text()
     )
 
+
 def test_mani_init_help():
     doc = docs / "mani-init.md"
     assert doc.is_file()
