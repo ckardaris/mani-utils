@@ -26,11 +26,15 @@ def check_output(request, cmd, work_dir, rel_dir=None, exit_code=0):
     pwd = request.node.path.parent
     ref = pwd / "ref"
     projects = pwd / "projects"
+    root = pwd / "../.."
 
     base = work_dir / "projects"
     shutil.copytree(projects, base)
     result = subprocess.run(
-        cmd,
+        f"""
+PATH={root}/bin:$PATH
+"""
+        + cmd,
         cwd=base / rel_dir if rel_dir else base,
         text=True,
         stdout=subprocess.PIPE,
