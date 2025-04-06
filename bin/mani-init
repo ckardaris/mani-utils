@@ -31,6 +31,7 @@ files="^.git\$"         # Files to search for projects.
 namecmd=""              # Command to run to give name.
 sync=                   # Sync additional projects.
 cfg="$PWD/mani.yaml"
+lock="$cfg.lock"
 
 # Parse arguments
 while getopts "f:n:sh" flag
@@ -64,21 +65,22 @@ config()
     dirname=${dirname:2}
     cd "$dirname" || return
     [[ -n "$namecmd" ]] && name=$(eval "$namecmd") || name="$dirname"
-    [[ "$(flock "$cfg" command yq ".projects.$name" "$cfg")" != "null" ]] && return
+    [[ "$(flock "$lock" command yq ".projects.$name" "$cfg")" != "null" ]] && return
     if [[ "$name" != "$dirname" ]]
     then
-        flock "$cfg" command yq -i ".projects.$name = {\"path\": \"$dirname\", \"sync\": false}" "$cfg"
+        flock "$lock" command yq -i ".projects.$name = {\"path\": \"$dirname\", \"sync\": false}" "$cfg"
     else
-        flock "$cfg" command yq -i ".projects.$name = {\"sync\": false}" "$cfg"
+        flock "$lock" command yq -i ".projects.$name = {\"sync\": false}" "$cfg"
     fi
 }
 
 # Export names needed in 'config'.
 export cfg
+export lock
 export namecmd
 export -f config
 
 fd "$files" --no-ignore --hidden -x sh -c 'config {}'
 [[ $(cat "$cfg") == "projects:" ]] && echo "No projects created." && rm "$cfg" && exit 1
-flock "$cfg" command yq -i ".projects |= sort_keys(.)" "$cfg"
+flock "$lock" command yq -i ".projects |= sort_keys(.)" "$cfg"
 mani ls projects
