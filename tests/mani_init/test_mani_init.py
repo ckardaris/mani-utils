@@ -108,3 +108,27 @@ mani-init -s -f file1.txt &>/dev/null
 """,
         tmp_path,
     )
+
+def test_ignore_submodules(request, tmp_path):
+    check_output(
+        request,
+        """
+tmpdir1="$(mktemp -d)"
+cd "$tmpdir1"
+git init &>/dev/null
+touch repo.txt
+git add .
+git commit -m "Init" &>/dev/null
+cd - &>/dev/null
+
+cd project1
+git init &>/dev/null
+touch test.txt
+git add .
+git commit -m "Init" &>/dev/null
+git -c protocol.file.allow=always submodule add "$tmpdir1" 2>/dev/null
+cd ..
+mani-init -s &>/dev/null
+""",
+        tmp_path,
+    )

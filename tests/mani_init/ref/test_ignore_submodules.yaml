@@ -1,0 +1,5 @@
+projects:
+  project1:
+    sync: false
+  project3:
+    sync: false

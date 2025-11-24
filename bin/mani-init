@@ -62,10 +62,24 @@ config()
 {
     file="$1"
     dirname="$(dirname "$file")"
-    dirname=${dirname:2}
+    dirname="${dirname:2}"
     cd "$dirname" || return
-    [[ -n "$namecmd" ]] && name=$(eval "$namecmd") || name="$dirname"
+
+    # Ignore submodules
+    [[ -n "$(git rev-parse --show-superproject-working-tree 2>/dev/null)" ]] && return
+
+    # Compute name of project
+    if [[ -n "$namecmd" ]]
+    then
+        name="$(eval "$namecmd")"
+    else
+        name="$dirname"
+    fi
+
+    # Check if project already exists
     [[ "$(flock "$lock" command yq ".projects.$name" "$cfg")" != "null" ]] && return
+
+    # Edit configuration
     if [[ "$name" != "$dirname" ]]
     then
         flock "$lock" command yq -i ".projects.$name = {\"path\": \"$dirname\", \"sync\": false}" "$cfg"
